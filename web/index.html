@@ -1,63 +1,52 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8"/>
-  <title>WhatsApp Bulk Sender - WABA</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body{font-family:Inter, Arial, sans-serif; max-width:840px; margin:40px auto; padding:0 16px;}
-    textarea,input{width:100%; padding:10px; margin:8px 0; box-sizing:border-box;}
-    button{padding:10px 16px; margin-top:8px; cursor:pointer;}
-    pre{background:#f5f5f5; padding:12px; overflow:auto;}
-    label{font-weight:600;}
-  </style>
+<meta charset="utf-8">
+<title>WABA Full SaaS</title>
+<style>
+body{font-family:Arial; max-width:800px; margin:40px auto; padding:0 16px;}
+textarea,input{width:100%; padding:10px; margin:8px 0;}
+button{padding:10px 16px; margin-top:8px; cursor:pointer;}
+pre{background:#f5f5f5; padding:12px;}
+</style>
 </head>
 <body>
-  <h1>WhatsApp Bulk Sender</h1>
-  <p>Enter mobile numbers (one per line) and the message to send via WhatsApp Cloud API.</p>
+<h1>WhatsApp Full SaaS Demo</h1>
 
-  <label>Mobile numbers (one per line, include country code, e.g. 9198xxxx)</label>
-  <textarea id="numbers" rows="6" placeholder="+9198..."></textarea>
+<h3>Send Template Message</h3>
+<textarea id="numbers" placeholder="One number per line"></textarea>
+<textarea id="message" placeholder="Message with {{variables}}"></textarea>
+<button onclick="send()">Send</button>
 
-  <label>Message</label>
-  <textarea id="message" rows="5" placeholder="Type your message"></textarea>
+<h3>Upload CSV</h3>
+<input type="file" id="csvFile" />
+<button onclick="uploadCSV()">Upload</button>
 
-  <button id="sendBtn">Send Messages</button>
-  <button id="clearBtn" style="margin-left:8px;">Clear</button>
-
-  <h3>Output</h3>
-  <pre id="output">No activity yet.</pre>
+<h3>Dashboard</h3>
+<pre id="dashboard">No messages yet.</pre>
 
 <script>
-document.getElementById('sendBtn').addEventListener('click', async ()=>{
-  const raw = document.getElementById('numbers').value;
-  const numbers = raw.split('\n').map(s=>s.trim()).filter(Boolean);
-  const message = document.getElementById('message').value.trim();
-  const out = document.getElementById('output');
-
-  if (!numbers.length) return out.textContent='Please add at least one number.';
-  if (!message) return out.textContent='Please type a message.';
-
-  out.textContent='Sending...';
-  try {
-    const resp = await fetch('/api/send', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ numbers, message })
-    });
-    const data = await resp.json();
-    out.textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    out.textContent = 'Error: '+err;
-  }
-});
-
-document.getElementById('clearBtn').addEventListener('click', ()=>{
-  document.getElementById('numbers').value='';
-  document.getElementById('message').value='';
-  document.getElementById('output').textContent='Cleared.';
-});
+async function send(){
+  const numbers = document.getElementById('numbers').value.split('\\n').map(s=>s.trim()).filter(Boolean);
+  const message = document.getElementById('message').value;
+  const resp = await fetch('/api/send',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({numbers,message}) });
+  const data = await resp.json();
+  alert(JSON.stringify(data,null,2));
+}
+async function uploadCSV(){
+  const file = document.getElementById('csvFile').files[0];
+  const form = new FormData();
+  form.append('file', file);
+  const resp = await fetch('/api/upload-csv',{ method:'POST', body:form });
+  const data = await resp.json();
+  alert(JSON.stringify(data,null,2));
+}
+async function refreshDashboard(){
+  const resp = await fetch('/api/dashboard');
+  const data = await resp.json();
+  document.getElementById('dashboard').textContent = JSON.stringify(data,null,2);
+}
+setInterval(refreshDashboard,3000);
 </script>
 </body>
 </html>
